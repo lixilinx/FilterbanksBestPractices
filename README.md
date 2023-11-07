@@ -1,6 +1,6 @@
 # Best practices with filterbanks
 
-Filterbank can be tricky. I repeatedly see improper practices of it even from the most experienced DSP engineers. Hence, I’d like to share what I have learned and am continuing to learn from myself and others with many years of practice. Hopefully more to come when possible. The math and design tool are from [my paper](https://ieeexplore.ieee.org/document/8304771).
+Filterbank is versatile but also tricky. I repeatedly see improper practices of it even from the most experienced DSP engineers. Hence, I’d like to share what I have learned and am continuing to learn from myself and others with many years of practice. The math and design tool are from [my paper](https://ieeexplore.ieee.org/document/8304771).
 
 ### What is a filterbank
 
@@ -37,13 +37,13 @@ Lower aliasing is a necessary, but not sufficient, condition for better AEC perf
 
 ### Squeezing synthesis filter does not help low latency filterbank design
 
-Many manually designed low latency filterbanks have long and refined filters for analysis, and short and coarse filters for synthesis. Such a practice may not yield balanced and efficient designs as the analysis filters mainly focus on old samples, not the recent samples that are to be decomposed and re-synthesized. The math is the same. [This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/very_low_latency_design_for_hearing_aid.m) generates the following extremely low latency design suitable for applications like hearing aid. Note that since the oversampling ratio is high, I have halved the default mainlobe width by setting the cutoff frequency to pi/B/2.
+Many manually designed low latency filterbanks have long and refined filters for analysis, and short and coarse filters for synthesis. Such a practice may not yield balanced and efficient designs as the analysis filters mainly focus on old samples, not the recent samples that are to be decomposed and re-synthesized. The math is the same. [This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/very_low_latency_design_for_hearing_aid.m) generates the following extremely low latency design suitable for applications like hearing aid. Note that since the oversampling ratio is high, I have halved the default mainlobe width by setting the cutoff frequency to pi/B/2 to sharpen the frequency resolution.
 
 <img src="https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/very_low_latency_design_for_hearing_aid.svg" width="400" />
 
 ### Replacing STFT with filterbank
 
-STFT is a special filterbank with prototype filter length equalling FFT size. Except for certain time-frequency analysis requiring nonnegative windows, generally we can replace STFT with filterbanks without much concern. [This code](https://github.com/lixilinx/PracticalFilterbanks/blob/main/replace_stft_with_fb.m) generates the following comparison results where both the filterbank and STFT are subject to the same latency, hop size and FFT size. Aliasings of the analysis (same for synthesis) filters of the filterbank and STFT are -14.5 dB and -35.7 dB, respectively. A virtually free design gain of 20+ dB!
+STFT is a special filterbank with prototype filter length equalling FFT size. Except for certain time-frequency analysis requiring nonnegative windows, generally we can replace STFT with filterbanks without much concern. [This code](https://github.com/lixilinx/PracticalFilterbanks/blob/main/replace_stft_with_fb.m) generates the following comparison results where both the filterbank and STFT are subject to the same latency, hop size and FFT size. Aliasings of the analysis (same for synthesis) filters of the STFT and filterbank are -14.5 dB and -35.7 dB, respectively. A virtually free design gain of 20+ dB!
 
 <img src="https://github.com/lixilinx/PracticalFilterbanks/blob/main/replace_stft_with_fb.svg" width="400" />
 
@@ -51,11 +51,25 @@ STFT is a special filterbank with prototype filter length equalling FFT size. Ex
 
 SRC can be expensive and invokes extra latency. But, a time domain SRC may be unnecessary in many cases. [This example](https://github.com/lixilinx/PracticalFilterbanks/blob/main/spare_that_SRC.m) shows how we can save a 16KHz-to-48KHz SRC by analyzing with filter for 16 KHz design and synthesizing with the one for 48 KHz design. The trick is that [this code](https://github.com/lixilinx/PracticalFilterbanks/blob/main/low_latency_design_for_aec.m) designs the two filters from initial guess of the same shape, and thus they are compatible.
 
-Actually, resampling in the frequency domain could be easier than in the time domain when the conversion ratio is complicated, e.g., 44.1KHz-to-16KHz. We just need to switch the synthesis filters that are prepared in advance. The same argument applies to the analysis side. Most likely the SRC before filterbank analysis can be saved as well. We just need to switch to the analysis filters matching the original sampling rate.
+Actually, resampling in the frequency domain could be easier than in the time domain when the conversion ratio is complicated, e.g., 44.1KHz-to-16KHz. We just need to switch the synthesis filters that are prepared in advance. The same argument applies to the analysis side. Most likely the SRC before filterbank analysis can be saved as well, just by switching to the analysis filters matching the original sampling rate.
 
 ### Frequency shift on analytic signal only
 
 Frequency shift is a basic operation to cut off the acoustic feedback in systems like hearing aid and public address (PA) systems. I saw that many implementations shift the signals in the frequency domain. This practice is improper as the synthesis filters are not shifted accordingly, and thus causing artifacts like beats even with shifting of a few Hz. [This code](https://github.com/lixilinx/PracticalFilterbanks/blob/main/frequency_shift_with_analytic_signal.m) shows a baseline practice: first split the signal into two analytic parts; then shift the low frequency part less, and high frequency part more. For this example, we see that the absolute normalized cross correlation between input and output reduces to about 0.1 for (2, 20) Hz shift and 0.0 for (3, 30) Hz shift, while without any audible artifacts.
+
+### Remove the systemic phase biases
+
+One common neglect when dealing with the phases, say unwrapping, is to ignore the systemic or structural bias of phases that I have summarized as below. As expected, generally this systemic biases cannot be put as a single smooth function of frame and bin indices as the resultant partial differential equation (PDE) is inconsistent with arbitrarily fine grids of time and frequency.
+
+<img src="https://github.com/lixilinx/PracticalFilterbanks/blob/main/nature_of_phase.svg" width="400" />
+
+[This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/structural_bias_of_phase.m) compares measured against predicted phase differences to generate the results as below. They do match well.
+
+<img src="https://github.com/lixilinx/PracticalFilterbanks/blob/main/measured_and_predicted_phases.svg" width="400" />
+
+The same script also demonstrates how to exploit this knowledge for accurate phase unwrapping. Removal of these biases lets us deal with the inherent transient properties of signals, and leads to consistently and significantly cleaner unwrapped phases.
+
+<img src="https://github.com/lixilinx/PracticalFilterbanks/blob/main/phase_unwrapping_std.svg" width="400" />
 
 ### Refs
 1, [Periodic sequences modulated filter banks](https://ieeexplore.ieee.org/document/8304771), IEEE SPL, 2018.
