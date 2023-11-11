@@ -1,6 +1,6 @@
 # Best practices with filterbanks
 
-Filterbank is versatile but also tricky. I repeatedly see improper practices of it even from the most experienced DSP engineers. Hence, I’d like to share what I have learned and am continuing to learn from myself and others with many years of practice. The math and design tool are from [my paper](https://ieeexplore.ieee.org/document/8304771).
+Filterbank is versatile but also tricky. I repeatedly see improper practices of it even from the most experienced DSP engineers. Here, I’d like to share what I have learned and am continuing to learn from my many years of practice. The math and design method are from [my paper](https://ieeexplore.ieee.org/document/8304771). Unlike the textbook styles, what makes life a little easier is that I treat all the uniform filterbanks with a single straightforward math framework.
 
 ### What is a filterbank
 
@@ -10,7 +10,7 @@ Aside from many great resources like textbooks, [this script](https://github.com
 
 From top to bottom, we have 1) the prototype filter; 2) the four cosine modulation sequences; 3) the four modulated filters, i.e., element-wise products between the prototype filter and modulation sequences; 4) frequency responses of the four modulated filters. We see that these four filters cover the whole frequency range nicely.
 
-Here, I mainly focus on the DFT modulated filterbanks. Still, all these modulated filterbanks share the same math, and only difference in modulation sequences.
+Here, I mainly focus on the DFT modulated filterbanks. Still, all these modulated filterbanks share the same math, and only difference in modulation sequences. Notably, 1) the periodicity of modulation sequences induces the polyphase structure; 2) trigonometric modulation series make FFT like fast algorithms possible.  
 
 ### MIRROR symmetry if latency is unconcerned
 
@@ -25,19 +25,19 @@ Here, I mainly focus on the DFT modulated filterbanks. Still, all these modulate
 
 I gradually increase filter length until overshoot, i.e., bumpy mainlobe, arises. Another strategy is to start from a large filter length, and then gradually increase lambda to damp the overshoot if there is.
 
-Setting symmetry=[0;0;0] releases all the design freedoms, and typically finds solutions with much lower aliasing (around 20 dB lower sidelobes in this example!). Lowering aliasing benefits certain applications like low, high or band pass filtering (LPF/HPF/BPF), sample-rate conversion (SRC), etc. However, symmetric design has better numerical properties and better fits other tasks like AEC.
+Setting symmetry=[0;0;0] releases all the design freedoms, and typically finds solutions with much lower aliasing (around 20 dB lower sidelobes in this example!). Lowering aliasing benefits certain applications like low, high or band pass filtering (LPF/HPF/BPF), sample-rate conversion (SRC), etc. However, symmetric design has nicer numerical properties and better fits other tasks like AEC.
 
 <img src="https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/low_latency_design_for_aec.svg" width="400" /> 
 
 ### Designs with lower aliasing do not necessarily performs better for tasks like AEC
 
-Lower aliasing is a necessary, but not sufficient, condition for better AEC performance. [This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/impulse_in_the_frequency_domain.m) shows what a naive time domain impulse looks like in the frequency domain. Subband domain filters using designs with low aliasing but long prototype filters will need many taps to fit even simple time domain filters, causing slow convergence and high misadjustment. Symmetric and compact designs have better numerical condition number and are thus preferred. Nevertheless, aliasing alone is a good performance index for applications like LPF, HPF, BPF, SRC, etc.
+Lower aliasing is a necessary, but not sufficient, condition for better AEC performance. [This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/impulse_in_the_frequency_domain.m) shows what a naive time domain impulse looks like in the frequency domain. Intuitively, subband domain filters using designs with low aliasing but long prototype filters will need many taps to fit even simple time domain filters, causing slow convergence and high misadjustment. Symmetric and compact designs have better numerical condition number and are thus preferred. Nevertheless, aliasing alone is a good performance index for applications like LPF, HPF, BPF, SRC, etc.
 
 <img src="https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/impulse_in_the_frequency_domain.svg" width="400" />
 
 ### Squeezing synthesis filter does not help low latency filterbank design
 
-Many manually designed low latency filterbanks have long and refined filters for analysis, and short and coarse filters for synthesis. Such a practice may not yield balanced and efficient designs as the analysis filters mainly focus on old samples, not the recent samples that are to be decomposed and re-synthesized. The math is the same. [This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/very_low_latency_design_for_hearing_aid.m) generates the following extremely low latency design suitable for applications like hearing aid. Note that since the oversampling ratio is high, I have halved the default mainlobe width by setting the cutoff frequency to pi/B/2 to sharpen the frequency resolution.
+Many manually designed low latency filterbanks have long and refined filters for analysis, and short and coarse filters for synthesis. Such a practice may not yield balanced and efficient designs as the analysis filters mainly focus on old samples, not the recent samples that are to be decomposed and re-synthesized. Anyway, our time-frequency analysis cannot break the [uncertainty principle](https://en.wikipedia.org/wiki/Uncertainty_principle) The math is still the same. [This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/very_low_latency_design_for_hearing_aid.m) generates the following extremely low latency design suitable for applications like hearing aid. Note that since the oversampling ratio is high, I have halved the default mainlobe width by setting the cutoff frequency to pi/B/2 to sharpen the frequency resolution.
 
 <img src="https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/very_low_latency_design_for_hearing_aid.svg" width="400" />
 
@@ -51,15 +51,15 @@ STFT is a special filterbank with prototype filter length equalling FFT size. Ex
 
 SRC can be expensive and invokes extra latency. But, a time domain SRC may be unnecessary in many cases. [This example](https://github.com/lixilinx/PracticalFilterbanks/blob/main/spare_that_SRC.m) shows how we can save a 16KHz-to-48KHz SRC by analyzing with filter for 16 KHz design and synthesizing with the one for 48 KHz design. The trick is that [this code](https://github.com/lixilinx/PracticalFilterbanks/blob/main/low_latency_design_for_aec.m) designs the two filters from initial guess of the same shape, and thus they are compatible.
 
-Actually, resampling in the frequency domain could be easier than in the time domain when the conversion ratio is complicated, e.g., 44.1KHz-to-16KHz. We just need to switch the synthesis filters that are prepared in advance. The same argument applies to the analysis side. Most likely the SRC before filterbank analysis can be saved as well, just by switching to the analysis filters matching the original sampling rate.
+Actually, resampling in the frequency domain could be easier (with a good FFT lib) than in the time domain when the conversion ratio is complicated, e.g., 44.1KHz-to-16KHz. We just need to switch the synthesis filters that are prepared in advance. The same argument applies to the analysis side. Most likely the SRC before filterbank analysis can be saved as well, just by switching to the analysis filters matching the original sample rate.
 
 ### Frequency shift on analytic signal only
 
-Frequency shift is a basic operation to cut off the acoustic feedback in systems like hearing aid and public address (PA) systems. I saw that many implementations shift the signals in the frequency domain. This practice is improper as the synthesis filters are not shifted accordingly, and thus causing artifacts like beats even with shifting of a few Hz. [This code](https://github.com/lixilinx/PracticalFilterbanks/blob/main/frequency_shift_with_analytic_signal.m) shows a baseline practice: first split the signal into two analytic parts; then shift the low frequency part less, and high frequency part more. For this example, we see that the absolute normalized cross correlation between input and output reduces to about 0.1 for (2, 20) Hz shift and 0.0 for (3, 30) Hz shift, while without any audible artifacts.
+Frequency shift is a basic operation to cut off the acoustic feedback in systems like hearing aid and public address (PA) systems. I saw that many implementations shift the signals in the frequency domain. This practice is improper as the synthesis filters are not shifted accordingly, and the misalignment may cause artifacts like beats even with shift of a few Hz. [This code](https://github.com/lixilinx/PracticalFilterbanks/blob/main/frequency_shift_with_analytic_signal.m) shows a baseline practice: first split the signal into two analytic parts; then shift the low frequency part less, and high frequency part more. For this example, we see that the absolute normalized cross correlation between input and output reduces to about 0.1 for (2, 20) Hz shift and 0.0 for (3, 30) Hz shift, while without any audible artifacts.
 
 ### Remove the systemic phase biases
 
-One common neglect when dealing with the phases, say unwrapping, is to ignore the systemic or structural bias of phases that I have summarized as below. As expected, generally this systemic biases cannot be put as a single smooth function of frame and bin indices as the resultant partial differential equation (PDE) is inconsistent with arbitrarily fine grids of time and frequency.
+One common neglect when dealing with the phases, say phase unwrapping, is to ignore the systemic or structural bias of phases for most signals that I have summarized as below. Generally, these systemic biases cannot be put into a single smooth function of frame and bin indices as the resultant partial differential equation (PDE) is inconsistent with arbitrarily fine grids of time and frequency. This inconsistency should be expected: the phase representation is succinct without assuming any further structures of the signals.
 
 <img src="https://github.com/lixilinx/PracticalFilterbanks/blob/main/nature_of_phase.svg" width="400" />
 
@@ -67,11 +67,11 @@ One common neglect when dealing with the phases, say unwrapping, is to ignore th
 
 <img src="https://github.com/lixilinx/PracticalFilterbanks/blob/main/measured_and_predicted_phases.svg" width="400" />
 
-The same script also demonstrates how to exploit this knowledge for accurate phase unwrapping. Removal of these biases lets us deal with the inherent transient properties of signals, and leads to consistently and significantly cleaner unwrapped phases.
+[The same script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/structural_bias_of_phase.m) also demonstrates how to exploit this knowledge for accurate phase unwrapping. Removal of these biases lets us deal with the inherent transient properties of signals, and leads to consistently and significantly cleaner unwrapped phases across all the frequencies. 
 
 <img src="https://github.com/lixilinx/PracticalFilterbanks/blob/main/phase_unwrapping_std.svg" width="400" />
 
 ### Refs
 1, [Periodic sequences modulated filter banks](https://ieeexplore.ieee.org/document/8304771), IEEE SPL, 2018.
 
-2, The matlab filterbank design code is the same as [here](https://sites.google.com/site/lixilinx/home/psmfb). I also have [Tensorflow and Pytorch implementations](https://github.com/lixilinx/Filterbank) of the DFT modulated filterbank, not polished but works well.
+2, The matlab filterbank design code is the same as [here](https://sites.google.com/site/lixilinx/home/psmfb). I also have [Tensorflow and Pytorch implementations](https://github.com/lixilinx/Filterbank) of the DFT modulated filterbank, not polished but works, useful for end2end differential designs.
