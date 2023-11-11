@@ -59,7 +59,7 @@ Frequency shift is a basic operation to cut off the acoustic feedback in systems
 
 ### Remove the systemic phase biases
 
-One common neglect when dealing with the phases, say phase unwrapping, is to ignore the systemic or structural bias of phases for most signals that I have summarized as below. Generally, these systemic biases cannot be put into a single smooth function of frame and bin indices as the resultant partial differential equation (PDE) is inconsistent with arbitrarily fine grids of time and frequency. This inconsistency should be expected: the phase representation is succinct without assuming any further structures of the signals.
+One common neglect when dealing with the phases, say phase unwrapping, is to ignore the systemic or structural bias of phases for signals from a random process. I summarize these biases in the figure below. Note that E here takes ensemble average, or time average for a stationary ergodic process. Generally, these systemic biases cannot be put into a single smooth function of frame and bin indices as the resultant partial differential equation (PDE) is inconsistent with arbitrarily fine grids of time and frequency. This inconsistency should not be a surprise: the phase representation is already succinct without assuming any further structures of the signals.
 
 <img src="https://github.com/lixilinx/PracticalFilterbanks/blob/main/nature_of_phase.svg" width="400" />
 
