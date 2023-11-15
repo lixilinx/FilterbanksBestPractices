@@ -71,6 +71,12 @@ One common neglect when dealing with the phases, say phase unwrapping, is to ign
 
 <img src="https://github.com/lixilinx/PracticalFilterbanks/blob/main/phase_unwrapping_std.svg" width="400" />
 
+### DCT filterbank for tasks like AEC?
+
+DCT filterbanks like lapped transform are widely used in subband codec. One common mistake for beginners is to use those critically decimated DCT filterbanks, originally designed for subband codec, for other tasks like AEC. This cannot work well as the aliasing due to downsampling is too high. Then there is another myth stating that DCT filterbanks cannot be used for AEC. Neither is this true. Actually, an oversampled DCT filterbank works for AEC as well. [This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/dct_filterbank_for_aec.m) compares critically decimated and oversampled DCT filterbanks to produce the following plot. The critically decimated one clearly suffers a lot from aliasing. The oversampled one will work as well as any good oversampled DFT filterbanks for AEC.     
+
+<img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/dct_filterbank_for_aec.svg" width="400" />
+
 ### Refs
 1, [Periodic sequences modulated filter banks](https://ieeexplore.ieee.org/document/8304771), IEEE SPL, 2018.
 
