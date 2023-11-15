@@ -150,5 +150,5 @@ ylabel('Analysis-synthesis Magnitude in dB')
 xlim([0, 1000])
 ylim([-80, 0])
 box on;
-legend('aliasing area', 'critically sampled', 'oversampled')
+legend('aliasing area', 'critically decimated', '2x oversampled')
 title('DCT filterbanks with 4 ms latency')
