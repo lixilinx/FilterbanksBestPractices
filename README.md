@@ -22,6 +22,8 @@ Filterbank is versatile but also tricky. I repeatedly see improper practices of 
 
 [DCT filterbank for tasks like AEC?](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#dct-filterbank-for-tasks-like-aec)
 
+[Special designs: wavelet, quadrature mirror filter (QMF), nonsubsampled filterbank](https://github.com/lixilinx/FilterbanksBestPractices/edit/main/README.md#special-designs-wavelet-quadrature-mirror-filter-qmf-nonsubsampled-filterbank)
+
 ### What is a filterbank
 
 Aside from many great resources like textbooks, [this script](https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/what_is_a_filterbank.m) generates the following plot illustrating what is a DCT-IV modulated filterbank.
@@ -29,6 +31,8 @@ Aside from many great resources like textbooks, [this script](https://github.com
 <img src="https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/what_is_a_filterbank.svg" width="500" />
 
 From top to bottom, we have 1) the prototype filter; 2) the four cosine modulation sequences; 3) the four modulated filters, i.e., element-wise products between the prototype filter and modulation sequences; 4) frequency responses of the four modulated filters. We see that these four filters cover the whole frequency range nicely.
+
+[These examples](https://github.com/lixilinx/FilterbanksBestPractices/edit/main/README.md#special-designs-wavelet-quadrature-mirror-filter-qmf-nonsubsampled-filterbank) consider the simplest filterbanks, i.e., DFT ones with period T=2. They also are good for illustrating the concept of filterbank.
 
 Here, I mainly focus on the DFT modulated filterbanks. Still, all these modulated filterbanks share the same math, and only difference in modulation sequences. Notably, 1) the periodicity of modulation sequences induces the polyphase structure; 2) trigonometric modulation series make FFT like fast algorithms possible.
 
@@ -96,6 +100,14 @@ One common neglect when dealing with the phases, say phase unwrapping, is to ign
 DCT filterbanks like lapped transform are widely used in subband codec. One common mistake for beginners is to use those critically decimated DCT filterbanks, designed for subband codec, for other tasks like AEC. This cannot work well as the aliasing due to downsampling is too high. Then there is another myth stating that DCT filterbanks cannot be used for AEC. Neither is this true. Actually, an oversampled DCT filterbank works for AEC as well as any good oversampled DFT filterbanks. [This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/dct_filterbank_for_aec.m) compares critically decimated and oversampled DCT filterbanks to produce the following plot. The critically decimated one clearly suffers a lot from aliasing, while the oversampled one does not.
 
 <img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/dct_filterbank_for_aec.svg" width="400" />
+
+### Special designs: wavelet, quadrature mirror filter (QMF), nonsubsampled filterbank
+
+Discrete wavelet and QMF are filterbanks with the two periodic modulation sequences: [...,1,1,1,1,...] and [...,1,-1,1,-1,...]. Thus, they are DFT modulated filterbanks with period T=2. Nonsubsampled filterbanks are the ones with B=1, i.e., no downsampling. All these special filterbanks can be designed with the same code, providing the same knobs for tweaking. No extra math is needed.
+
+[This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/some_special_designs.m) demonstrates such designs to have the following figure. When T=2, I only show the low pass (LP) analysis filter. The high pass (HP) filter is obtained just by modulating the LP one with sequence [...,1,-1,1,-1;...], i.e., alternative sign change. Hence, their frequency responses mirror each other around pi/2. The nonsubsampled one is free of aliasing. These filterbanks are the building blocks for wavelet packet decomposition (WPD), with or without decimation at any resolution level. 
+
+<img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/some_special_designs.svg" width="400" />
 
 ### Refs
 
