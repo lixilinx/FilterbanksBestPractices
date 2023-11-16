@@ -1,6 +1,6 @@
 # Best practices with filterbanks
 
-Filterbank is versatile but also tricky. I repeatedly see improper practices of it even from the most experienced DSP engineers. Here, I’d like to share what I have learned and am continuing to learn from my many years of practice. The math and design method are from [my paper](https://ieeexplore.ieee.org/document/8304771). Unlike the textbook styles, what makes life a little easier is that I treat all the uniform filterbanks with a single straightforward math framework. Topics:
+Filterbank is versatile but also tricky. I repeatedly see improper practices of it even from the most experienced DSP engineers. Here, I’d like to share what I have learned and am continuing to learn from my many years of practice. The math and design method are from [my paper](https://ieeexplore.ieee.org/document/8304771). Unlike the textbook styles, what makes life a little easier is that I treat all the uniform filterbanks, include special cases like QMF and nonsubsampled ones, with a single straightforward math framework. Topics:
 
 [What is a filterbank](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#what-is-a-filterbank)
 
@@ -22,7 +22,7 @@ Filterbank is versatile but also tricky. I repeatedly see improper practices of 
 
 [DCT filterbank for tasks like AEC?](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#dct-filterbank-for-tasks-like-aec)
 
-[Special designs: wavelet, quadrature mirror filter (QMF), nonsubsampled filterbank](https://github.com/lixilinx/FilterbanksBestPractices/edit/main/README.md#special-designs-wavelet-quadrature-mirror-filter-qmf-nonsubsampled-filterbank)
+[Special designs: wavelet, quadrature mirror filter (QMF), nonsubsampled filterbank](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/README.md#special-designs-wavelet-quadrature-mirror-filter-qmf-nonsubsampled-filterbank)
 
 ### What is a filterbank
 
@@ -32,7 +32,7 @@ Aside from many great resources like textbooks, [this script](https://github.com
 
 From top to bottom, we have 1) the prototype filter; 2) the four cosine modulation sequences; 3) the four modulated filters, i.e., element-wise products between the prototype filter and modulation sequences; 4) frequency responses of the four modulated filters. We see that these four filters cover the whole frequency range nicely.
 
-[These examples](https://github.com/lixilinx/FilterbanksBestPractices/edit/main/README.md#special-designs-wavelet-quadrature-mirror-filter-qmf-nonsubsampled-filterbank) consider the simplest filterbanks, i.e., DFT ones with period T=2. They also are good for illustrating the concept of filterbank.
+[These examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/README.md#special-designs-wavelet-quadrature-mirror-filter-qmf-nonsubsampled-filterbank) consider the simplest filterbanks, i.e., DFT ones with period T=2. They also are good for illustrating the concept of filterbank.
 
 Here, I mainly focus on the DFT modulated filterbanks. Still, all these modulated filterbanks share the same math, and only difference in modulation sequences. Notably, 1) the periodicity of modulation sequences induces the polyphase structure; 2) trigonometric modulation series make FFT like fast algorithms possible.
 
