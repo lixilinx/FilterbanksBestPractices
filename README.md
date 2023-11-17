@@ -22,7 +22,7 @@ Filterbank is versatile but also tricky. I repeatedly see improper practices of 
 
 [DCT filterbank for tasks like AEC?](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#dct-filterbank-for-tasks-like-aec)
 
-[Special designs: wavelet, quadrature mirror filter (QMF), nonsubsampled filterbank](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/README.md#special-designs-wavelet-quadrature-mirror-filter-qmf-nonsubsampled-filterbank)
+[Special designs: wavelet, quadrature mirror filter (QMF), customized, nonsubsampled and nonuniform filterbanks](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#special-designs-wavelet-quadrature-mirror-filter-qmf-customized-nonsubsampled-and-nonuniform-filterbanks)
 
 ### What is a filterbank
 
@@ -32,7 +32,7 @@ Aside from many great resources like textbooks, [this script](https://github.com
 
 From top to bottom, we have 1) the prototype filter; 2) the four cosine modulation sequences; 3) the four modulated filters, i.e., element-wise products between the prototype filter and modulation sequences; 4) frequency responses of the four modulated filters. We see that these four filters cover the whole frequency range nicely.
 
-[These examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/README.md#special-designs-wavelet-quadrature-mirror-filter-qmf-nonsubsampled-filterbank) consider the simplest filterbanks, i.e., DFT ones with period T=2. They also are good for illustrating the concept of filterbank.
+[These examples](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#special-designs-wavelet-quadrature-mirror-filter-qmf-customized-nonsubsampled-and-nonuniform-filterbanks) illustrate a few special designs. They also are good for explaining the concept of filterbank.
 
 Here, I mainly focus on the DFT modulated filterbanks. Still, all these modulated filterbanks share the same math, and only difference in modulation sequences. Notably, 1) the periodicity of modulation sequences induces the polyphase structure; 2) trigonometric modulation series make FFT like fast algorithms possible.
 
@@ -109,7 +109,7 @@ Nonsubsampled filterbanks are the ones with B=1, i.e., no downsampling. See the 
 
 Nonuniform filterbanks can be built from uniform ones by either splitting certain bands, e.g., the wavelet packet decomposition (WPD), or merging certain bands, e.g., the [nonuniform example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m). 
 
-The same code also supports customized designs. You just need to specify the Gamma matrix. See the [nonuniform example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m), where the modulation sequences are that of DFT's shifted by 0.5 bin to get rid of the DC and Nyquist bins in the DFT filterbanks.
+My method also supports customized designs. You just need to specify the Gamma matrix. See the [nonuniform example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m), where the modulation sequences are that of DFT's shifted by 0.5 bin to get rid of the DC and Nyquist bins in the DFT filterbanks.
 
 The [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) generates the following designs:  
 
