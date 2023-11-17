@@ -101,13 +101,25 @@ DCT filterbanks like lapped transform are widely used in subband codec. One comm
 
 <img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/dct_filterbank_for_aec.svg" width="400" />
 
-### Special designs: wavelet, quadrature mirror filter (QMF), nonsubsampled filterbank
+### Special designs: wavelet, quadrature mirror filter (QMF), customized, nonsubsampled and nonuniform filterbanks
 
-Discrete wavelet and QMF are filterbanks with the two periodic modulation sequences: [...,1,1,1,1,...] and [...,1,-1,1,-1,...]. Thus, they are DFT modulated filterbanks with period T=2. Nonsubsampled filterbanks are the ones with B=1, i.e., no downsampling. All these special filterbanks can be designed with the same code, providing the same knobs for tweaking. No extra math is needed.
+Discrete wavelet and QMF are DFT filterbanks with T=2, thus having the two modulation sequences, [1,1] for low pass (LP) filters and [1,-1] for high pass (HF) filters. There are four big groups of QMFs: critically decimated (B=2) or oversampled (B=1); two possible phases for the modulation sequence of HP analysis filter, [1,-1,1,-1,...] or [-1,1,-1,1,...]. See the [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m). 
 
-[This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/some_special_designs.m) demonstrates such designs to have the following figure. When T=2, I only show the low pass (LP) analysis filter. The high pass (HP) filter is obtained just by modulating the LP one with sequence [...,1,-1,1,-1;...], i.e., alternative sign change. Hence, their frequency responses mirror each other around pi/2. The nonsubsampled one is free of aliasing. These filterbanks are the building blocks for wavelet packet decomposition (WPD), with or without decimation at any resolution level. 
+Nonsubsampled filterbanks are the ones with B=1, i.e., no downsampling. See the [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) and the [nonuniform example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m).
 
-<img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/some_special_designs.svg" width="400" />
+Nonuniform filterbanks can be built from uniform ones by either splitting certain bands, e.g., the wavelet packet decomposition (WPD), or merging certain bands, e.g., the [nonuniform example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m). 
+
+The same code also supports customized designs. You just need to specify the Gamma matrix. See the [nonuniform example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m), where the modulation sequences are that of DFT's shifted by 0.5 bin to get rid of the DC and Nyquist bins in the DFT filterbanks.
+
+The [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) generates the following designs:  
+
+<img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.svg" width="400" />
+
+The [nonuniform example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m) generates design:
+
+<img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.svg" width="500" />
+
+All these filterbank examples and many many more possibilities can be designed by the same code, providing the same knobs for tweaking. It is fun! 
 
 ### Refs
 
