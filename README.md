@@ -119,7 +119,13 @@ The [nonuniform example](https://github.com/lixilinx/FilterbanksBestPractices/bl
 
 <img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.svg" width="500" />
 
-All these filterbank examples and many many more possibilities can be designed by the same code, providing the same knobs for tweaking. It is fun! 
+All these filterbank examples and many many more possibilities can be designed by the same code, providing the same knobs for tweaking. It is fun!
+
+### Optimization of discrete design freedoms
+
+Certain discrete design freedoms, say the phase shift pair (i, j) in a DFT filterbank, have closed-form solutions. Other discrete design freedoms have a clear boundary, say latency + 1 cannot be smaller than block size in any causal design, latency + 1 must equal filter length when MIRROR symmetry is enforced. Still, there are many discrete design freedoms that interact with the continuous design freedoms in complicated ways. For example, [this script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/optimization_of_discrete_design_freedoms.m) studies DFT filterbank designs with fixed T and various B and latency to generate the following results. Nearly perfect reconstruction (NPR) always is feasible for each design point, but the quality of the designs could jitter a lot when extra constraints like symmetry are imposed. The picture could be far more complicated than the text book style "half overlap symmetric design". There are no simple recipes for general discrete design freedom optimization. A good practice is to sweep these discrete freedoms on scaled down design problems, and then use the scaled up optimal solutions as the initial guess for the target problems.        
+
+<img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/optimization_of_discrete_design_freedoms.svg" width="400" />
 
 ### Refs
 
