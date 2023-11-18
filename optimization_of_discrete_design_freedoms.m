@@ -6,7 +6,7 @@ figure;
 %% first with SAME symmetry constraint
 subplot(1,2,1)
 for B = 3:5
-    Costs = zeros(Lh+Lg, 1);
+    Costs = zeros(Lh, 1); % kind of silly to consider tau+1>Lh; just flip the filters to get tau+1>Lh
     for tau = 1 : length(Costs)
         try
             fb = FilterBankStruct( );
@@ -41,12 +41,15 @@ box on;
 xlabel('$({\rm latency}+1)/T$', 'Interpreter','latex')
 ylabel('$\log({\rm Design \; loss})$', 'Interpreter','latex')
 legend('$T=8,\, B=3$', '$T=8,\, B=4$', '$T=8,\, B=5$', 'Interpreter','latex', 'Fontsize', 7)
+xlim('tight')
+ylim('tight')
+grid on
 title('(a) SAME symmetry')
 
 %% then free designs
 subplot(1,2,2)
 for B = 3:5
-    Costs = zeros(Lh+Lg, 1);
+    Costs = zeros(Lh, 1);
     for tau = 1 : length(Costs)
         try
             fb = FilterBankStruct( );
@@ -79,4 +82,7 @@ box on;
 xlabel('$({\rm latency}+1)/T$', 'Interpreter','latex')
 ylabel('$\log({\rm Design \; loss})$', 'Interpreter','latex')
 legend('$T=8,\, B=3$', '$T=8,\, B=4$', '$T=8,\, B=5$', 'Interpreter','latex', 'Fontsize', 7)
+xlim('tight')
+ylim('tight')
+grid on
 title('(b) Free design')
