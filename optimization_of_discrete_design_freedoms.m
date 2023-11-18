@@ -1,11 +1,11 @@
 clear all; close all; clc
 
-T=16; Lh=2*T; Lg=Lh; eta=1e4; lambda=0.0;
+T=8; Lh=3*T; Lg=Lh; eta=1e4; lambda=0.0;
 figure;
 
 %% first with SAME symmetry constraint
 subplot(1,2,1)
-for B = 7:9
+for B = 3:5
     Costs = zeros(Lh+Lg, 1);
     for tau = 1 : length(Costs)
         try
@@ -17,7 +17,7 @@ for B = 7:9
 
             best_cost = inf;
             best_fb = fb;
-            for num_trial = 1 : 20
+            for num_trial = 1 : 100
                 [h, g] = fbd_random_initial_guess(Lh, Lg, fb.B, fb.tau0);
                 fb.h = h;   fb.g = g;
                 [fb, cost, recon_err, iter] = FilterBankDesign(fb, eta, lambda, 100);
@@ -35,17 +35,17 @@ for B = 7:9
             Costs(tau) = inf;
         end
     end
-    hold on; semilogy((0:length(Costs)-1), log(Costs))
+    hold on; semilogy((1:length(Costs))/T, log(Costs))
 end
 box on;
-xlabel('Latency')
+xlabel('$({\rm latency}+1)/T$', 'Interpreter','latex')
 ylabel('$\log({\rm Design \; loss})$', 'Interpreter','latex')
-legend('$T=16,\, B=7$', '$T=16,\, B=8$', '$T=16,\, B=9$', 'Interpreter','latex')
+legend('$T=8,\, B=3$', '$T=8,\, B=4$', '$T=8,\, B=5$', 'Interpreter','latex', 'Fontsize', 7)
 title('(a) SAME symmetry')
 
 %% then free designs
 subplot(1,2,2)
-for B = 7:9
+for B = 3:5
     Costs = zeros(Lh+Lg, 1);
     for tau = 1 : length(Costs)
         try
@@ -56,7 +56,7 @@ for B = 7:9
 
             best_cost = inf;
             best_fb = fb;
-            for num_trial = 1 : 20
+            for num_trial = 1 : 100
                 [h, g] = fbd_random_initial_guess(Lh, Lg, fb.B, fb.tau0);
                 fb.h = h;   fb.g = g;
                 [fb, cost, recon_err, iter] = FilterBankDesign(fb, eta, lambda, 100);
@@ -73,10 +73,10 @@ for B = 7:9
             Costs(tau) = inf;
         end
     end
-    hold on; semilogy((0:length(Costs)-1), log(Costs))
+    hold on; semilogy((1:length(Costs))/T, log(Costs))
 end
 box on;
-xlabel('Latency')
+xlabel('$({\rm latency}+1)/T$', 'Interpreter','latex')
 ylabel('$\log({\rm Design \; loss})$', 'Interpreter','latex')
-legend('$T=16,\, B=7$', '$T=16,\, B=8$', '$T=16,\, B=9$', 'Interpreter','latex')
+legend('$T=8,\, B=3$', '$T=8,\, B=4$', '$T=8,\, B=5$', 'Interpreter','latex', 'Fontsize', 7)
 title('(b) Free design')
