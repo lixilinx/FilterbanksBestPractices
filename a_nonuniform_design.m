@@ -1,7 +1,7 @@
 clear all; close all; clc
 
 %% we first consider a new modulation sequence obtained by shifting DFT's by 0.5 bin
-% So with K bins, the period will be T = 2*K.
+% So with K bins, the period will be T = 2*K due to 0.5 bin shift.
 % Let's check its Gamma matrix with a simple example
 K = 3;
 T = 2*K;
@@ -35,9 +35,8 @@ lambda = 0;
 
 best_cost = inf;
 best_fb = fb;
-for num_trial = 1 : 20
-    [h, g] = fbd_random_initial_guess(Lh, Lg, fb.B, fb.tau0);
-    fb.h = h;   fb.g = g;
+for num_trial = 1 : 10
+    fb.h = rand(Lh,1); fb.g = rand(Lg,1);
     [fb, cost, recon_err, iter] = FilterBankDesign(fb, eta, lambda, 100);
     fprintf('Trial: %g; cost: %g; reconstruction error: %g; iterations %g\n', num_trial, cost, recon_err, iter)
     if cost < best_cost

@@ -14,8 +14,7 @@ lambda = 0;
 best_cost = inf;
 best_fb = fb;
 for num_trial = 1 : 100
-    [h, g] = fbd_random_initial_guess(Lh, Lg, fb.B, fb.tau0);
-    fb.h = h;   fb.g = g;
+    fb.h = rand(Lh,1);   fb.g = rand(Lg,1);
     [fb, cost, recon_err, iter] = FilterBankDesign(fb, eta, lambda, 100);
     fprintf('Trial: %g; cost: %g; reconstruction error: %g; iterations %g\n', num_trial, cost, recon_err, iter)
     if cost < best_cost
@@ -50,8 +49,7 @@ lambda = 0;
 best_cost = inf;
 best_fb = fb;
 for num_trial = 1 : 100
-    [h, g] = fbd_random_initial_guess(Lh, Lg, fb.B, fb.tau0);
-    fb.h = h;   fb.g = g;
+    fb.h = rand(Lh,1);   fb.g = rand(Lg,1);
     [fb, cost, recon_err, iter] = FilterBankDesign(fb, eta, lambda, 100);
     fprintf('Trial: %g; cost: %g; reconstruction error: %g; iterations %g\n', num_trial, cost, recon_err, iter)
     if cost < best_cost
