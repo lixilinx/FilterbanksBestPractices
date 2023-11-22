@@ -28,6 +28,8 @@ Topics (unordered):
 
 [Optimization of discrete design freedoms](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#optimization-of-discrete-design-freedoms)
 
+[Exact phase linearity, a luxury or a must-have?](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#exact-phase-linearity-a-luxury-or-a-must-have)
+
 ### What is a filterbank
 
 Aside from many great resources like textbooks, [this script](https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/what_is_a_filterbank.m) generates the following plot illustrating what is a DCT-IV modulated filterbank.
@@ -55,7 +57,7 @@ Two drawbacks of MIRROR symmetry: 1) generally it is not good for low latency de
 
 I gradually increase filter length until overshoot, i.e., bumpy mainlobe, arises. Another strategy is to start from a large filter length, and then gradually increase lambda to damp the overshoot if there is.
 
-Setting symmetry=[0;0;0] releases all the design freedoms, and typically finds solutions with much lower aliasing (around 20 dB lower sidelobes in this example!). Lowering aliasing benefits certain applications like low, high or band pass filtering (LPF/HPF/BPF), sample-rate conversion (SRC), etc. However, symmetric design has nicer numerical properties and better fits other tasks like AEC. Another merit of SAME symmetry is that both the analysis and synthesis filters must have nearly linear phase in the pass band as otherwise, nearly perfect reconstruction (NPR) is not possible.
+Setting symmetry=[0;0;0] releases all the design freedoms, and typically finds solutions with much lower aliasing (around 20 dB lower sidelobes in this example!). Lowering aliasing benefits certain applications like low, high or band pass filtering (LPF/HPF/BPF), sample-rate conversion (SRC), etc. However, symmetric design has nicer numerical properties and better fits other tasks like AEC. Another merit of SAME symmetry is that both the analysis and synthesis filters must have approximately linear phase in the pass band as otherwise, nearly perfect reconstruction (NPR) is not possible.
 
 <img src="https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/low_latency_design_for_aec.svg" width="400" /> 
 
@@ -111,7 +113,7 @@ DCT filterbanks like [lapped transform and MDCT](https://en.wikipedia.org/wiki/M
 
 ### Special designs: wavelet, quadrature mirror filter (QMF), customized, nonsubsampled and nonuniform filterbanks
 
-Discrete wavelet and QMF are DFT filterbanks with T=2, thus having the two modulation sequences: [1,1] for low pass (LP) filters and [1,-1] for high pass (HF) filters. This observation is insightful. It lets us to design all the possible flavors of QMFs: critically decimated (B=2) or oversampled (B=1); two possible phases for the modulation sequence of HP analysis filter: [1,-1,1,-1,...] or [-1,1,-1,1,...]; different symmetries. See the [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) for details.   
+Discrete wavelet and QMF are DFT filterbanks with T=2, thus having the two modulation sequences: [1,1] for low pass (LP) filters and [1,-1] for high pass (HF) filters. This observation is insightful. It lets us design all the possible flavors of QMFs: critically decimated (B=2) or oversampled (B=1); two possible phases for the modulation sequence of HP analysis filter: [1,-1,1,-1,...] or [-1,1,-1,1,...]; different symmetries. See the [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) for details.   
 
 Nonsubsampled filterbanks are the ones with B=1, i.e., no downsampling after analysis. See the [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) and the [nonuniform design example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m).
 
@@ -145,11 +147,11 @@ To be clear, a linear phase filterbank suggests that all the modulated analysis 
 
 For audio processing, our human ears are deaf to absolute phases. Thus, phase linearity might not be a must-have. For image processing, phase distortion is not acceptable. But, image processing is essentially acausal as all the neighbors of a pixel can be used for its processing. Thus, filters with large latency but linear phase are affordable and good to have there.  
 
-[This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/low_latency_design_for_aec.m) generates the following comparison results to show how bad to impose linear phase and low latency constraints at the same time. Following a common but not necessarily good practice, I set symmetry=[0;1;1] to force both the analysis and synthesis filters to have linear phases, and different filter lengths and weights to get high resolution analysis filters and low resolution synthesis filters. The performance gap between linear phase and SAME symmetry designs are big. The reason is that the SAME symmetry only forces the phase linearity in the pass band, while symmetry=[0;1;1] forces the phase to be linear even in the stop band, thus wasteful.       
+[This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/low_latency_design_for_aec.m) generates the following comparison results to show how bad to impose linear phase and low latency constraints at the same time. Following a common but not necessarily good practice, I set symmetry=[0;1;1] to force both the analysis and synthesis filters to have linear phases, and different filter lengths and weights to get high resolution analysis filters and low resolution synthesis filters. The performance gap between linear phase and SAME symmetry designs is huge. Why? The SAME symmetry only forces the phase linearity in the pass band, while symmetry=[0;1;1] forces the phase to be linear even in the stop band, thus wasteful.       
 
 <img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/linear_phase_can_be_a_luxury.svg" width="400" />
 
-Exact phase linearity, i.e., phase linearity in both pass and stop bands, is such a strong constraint and sometimes cannot coexist with the perfect reconstruction (PR) condition. For example, by revisiting the PR condition, we see that a QMF filter with odd filter lengths cannot has linear phase. A linear phase DCT-IV filterbank with filter length T always have zero DC gain, and thus also cannot meet the PR condition.
+Exact phase linearity, i.e., phase linearity in both pass and stop bands, is such a strong constraint and sometimes cannot coexist with the perfect reconstruction (PR) condition. For example, by revisiting the PR condition, we see that a QMF filter with odd filter lengths cannot have linear phase. A linear phase DCT-IV filterbank with filter length T always has zero DC gain, and thus also cannot meet the PR condition.
 
 ### Refs
 
