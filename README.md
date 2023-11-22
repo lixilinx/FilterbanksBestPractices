@@ -1,6 +1,6 @@
 # Best practices with filterbanks
 
-Filterbank is versatile but also tricky. I repeatedly see improper practices of it even from the most experienced DSP engineers. Here, I’d like to share what I have learned and am continuing to learn from my many years of practice. The math and design method are from [my paper](https://ieeexplore.ieee.org/document/8304771). Unlike the textbook styles, what makes life a little easier is that I treat all the uniform filterbanks with a single straightforward math framework and disclose all the design freedoms explicitly. 
+Filterbank is versatile but also tricky. I repeatedly see improper practices of it even from the most experienced DSP engineers. Here, I’d like to share what I have learned from my many years of practice. The math and design method are from [my paper](https://ieeexplore.ieee.org/document/8304771). Unlike the textbook styles, what makes life a little easier is that I treat all the uniform filterbanks with a single straightforward math framework and disclose all the design freedoms explicitly. 
 
 Topics (unordered):
 
@@ -44,6 +44,8 @@ Here, I mainly focus on the DFT modulated filterbanks. Still, all these modulate
 
 [This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/mirror_design_for_latency_insensitive_applications.m) generates the following design for applications insensitive to latency. With symmetry setting either [1;0;0] or [0;0;0], the code finds this optimal design where analysis and synthesis filters mirror each other. Forcing symmetry=[-1;0;0] (analysis filter equals synthesis filter) leads to noticeable worse design as the resultant filter is symmetric, thus halves the continuous design freedoms.
 
+Two drawbacks of MIRROR symmetry: 1) generally it is not good for low latency design as latency+1 must equal filter length; 2) typically the analysis and synthesis filters have approximately minimum and maximum (or maximum and minimum) phase properties, respectively. Thus, neither one has linear phase property.
+
 <img src="https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/mirror_design_time.svg" width="400" />
 <img src="https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/mirror_design_frequency.svg" width="400" />
 
@@ -53,7 +55,7 @@ Here, I mainly focus on the DFT modulated filterbanks. Still, all these modulate
 
 I gradually increase filter length until overshoot, i.e., bumpy mainlobe, arises. Another strategy is to start from a large filter length, and then gradually increase lambda to damp the overshoot if there is.
 
-Setting symmetry=[0;0;0] releases all the design freedoms, and typically finds solutions with much lower aliasing (around 20 dB lower sidelobes in this example!). Lowering aliasing benefits certain applications like low, high or band pass filtering (LPF/HPF/BPF), sample-rate conversion (SRC), etc. However, symmetric design has nicer numerical properties and better fits other tasks like AEC.
+Setting symmetry=[0;0;0] releases all the design freedoms, and typically finds solutions with much lower aliasing (around 20 dB lower sidelobes in this example!). Lowering aliasing benefits certain applications like low, high or band pass filtering (LPF/HPF/BPF), sample-rate conversion (SRC), etc. However, symmetric design has nicer numerical properties and better fits other tasks like AEC. Another merit of SAME symmetry is that both the analysis and synthesis filters must have nearly linear phase in the pass band as otherwise, nearly perfect reconstruction (NPR) is not possible.
 
 <img src="https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/low_latency_design_for_aec.svg" width="400" /> 
 
@@ -71,7 +73,9 @@ Many manually designed low latency filterbanks have long and refined filters for
 
 ### Replacing STFT with filterbank
 
-STFT is a special filterbank with prototype filter length equalling FFT size. Except for certain time-frequency analysis requiring nonnegative windows, generally we can replace STFT with filterbanks without much concern. [This code](https://github.com/lixilinx/PracticalFilterbanks/blob/main/replace_stft_with_fb.m) generates the following comparison results where both the filterbank and STFT are subject to the same latency, hop size and FFT size. Aliasings of the analysis (same for synthesis) filters of the STFT and filterbank are -14.5 dB and -35.7 dB, respectively. A virtually free design gain of 20+ dB!
+STFT is a special DFT filterbank with prototype filter length equalling FFT size. Except for certain time-frequency analysis requiring nonnegative windows, generally we can replace STFT with filterbanks without much concern. [This code](https://github.com/lixilinx/PracticalFilterbanks/blob/main/replace_stft_with_fb.m) generates the following comparison results where both the filterbank and STFT are subject to the same latency, hop size and FFT size. Aliasings of the analysis (same for synthesis) filters of the STFT and filterbank are -14.5 dB and -35.7 dB, respectively. A virtually free design gain of 20+ dB!
+
+The same argument holds for the [modified DCT (MDCT)](https://en.wikipedia.org/wiki/Modified_discrete_cosine_transform) as well. MDCT is a special DCT-IV filterbank with prototype filter length equalling half of the period of modulation sequences.  
 
 <img src="https://github.com/lixilinx/PracticalFilterbanks/blob/main/replace_stft_with_fb.svg" width="400" />
 
@@ -101,19 +105,19 @@ One common neglect when dealing with the phases, say phase unwrapping, is to ign
 
 ### DCT filterbank for tasks like AEC?
 
-DCT filterbanks like lapped transform are widely used in audio and image subband codecs. One common mistake for beginners is to use those critically decimated DCT filterbanks, designed for a subband codec, for other tasks like AEC. This cannot work well as the aliasing due to downsampling is too high. Then, somehow this prompts one myth stating that DCT filterbanks cannot be used for AEC. Neither is this true. Actually, an oversampled DCT filterbank works for AEC as well as any good oversampled DFT filterbanks. [This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/dct_filterbank_for_aec.m) compares a critically decimated and an oversampled DCT filterbanks to produce the following plot. The critically decimated one clearly suffers a lot from aliasing, while the oversampled one does not.
+DCT filterbanks like [lapped transform and MDCT](https://en.wikipedia.org/wiki/Modified_discrete_cosine_transform) are widely used in audio and image subband codecs. One common mistake for beginners is to use those critically decimated DCT filterbanks, designed for a subband codec, for other tasks like AEC. This cannot work well as the aliasing due to downsampling is too high. Then, somehow this prompts one myth stating that DCT filterbanks cannot be used for AEC. Neither is this true. Actually, an oversampled DCT filterbank works for AEC as well as any good oversampled DFT filterbanks. [This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/dct_filterbank_for_aec.m) compares a critically decimated and an oversampled DCT filterbanks to produce the following plot. The critically decimated one clearly suffers a lot from aliasing, while the oversampled one does not.
 
 <img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/dct_filterbank_for_aec.svg" width="400" />
 
 ### Special designs: wavelet, quadrature mirror filter (QMF), customized, nonsubsampled and nonuniform filterbanks
 
-Discrete wavelet and QMF are DFT filterbanks with T=2, thus having the two modulation sequences: [1,1] for low pass (LP) filters and [1,-1] for high pass (HF) filters. This observation is insightful. It lets us to group all these designs to four big buckets: critically decimated (B=2) or oversampled (B=1); two possible phases for the modulation sequence of HP analysis filter: [1,-1,1,-1,...] or [-1,1,-1,1,...]. Totally 2x2=4 possibilities. Many textbooks only treat a subset of all these possible designs. See the [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) for details. 
+Discrete wavelet and QMF are DFT filterbanks with T=2, thus having the two modulation sequences: [1,1] for low pass (LP) filters and [1,-1] for high pass (HF) filters. This observation is insightful. It lets us to design all the possible flavors of QMFs: critically decimated (B=2) or oversampled (B=1); two possible phases for the modulation sequence of HP analysis filter: [1,-1,1,-1,...] or [-1,1,-1,1,...]; different symmetries. See the [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) for details.   
 
 Nonsubsampled filterbanks are the ones with B=1, i.e., no downsampling after analysis. See the [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) and the [nonuniform design example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m).
 
 Nonuniform filterbanks can be built from uniform ones by either splitting certain bands, e.g., the wavelet packet decomposition (WPD), or merging bands under certain conditions, e.g., shown in this [nonuniform design example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m). 
 
-The same method also supports customized designs. See the [nonuniform design example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m), where the modulation sequences are that of DFT's shifted by 0.5 bin to get rid of the real-valued DC and Nyquist bins shown in an ordinary DFT filterbanks (yes, sometimes we feel better after removing those two abrupt real-valued bins). Unlike the GDFT modulation sequences, I do not shift the sequences by 0.5 sample along the time axis. Thus, we are designing a new unnamed filterbank. Following the code, we identify the period of the modulation sequences, the Gamma matrix, and then proceed as usual to design the filterbanks.    
+The same method also supports customized designs. See the [nonuniform design example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m), where the modulation sequences are that of DFT's shifted by 0.5 bin to get rid of the real-valued DC and Nyquist bins shown in an ordinary DFT filterbanks (yes, sometimes we feel better after removing those two abrupt real-valued bins). Unlike the GDFT modulation sequences, I do not shift the sequences by 0.5 sample along the time axis to simplify the operations. Following the code, we identify the period of the modulation sequences, the Gamma matrix, and then proceed as usual to design the filterbanks.    
 
 The [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) generates the following sample designs:  
 
@@ -127,13 +131,25 @@ The [nonuniform example](https://github.com/lixilinx/FilterbanksBestPractices/bl
 
 Filterbank design is an optimization problem loaded with local minima. We are almost sure to find the global minima for the continuous design freedoms by starting the filter coefficients from diverse random initial guesses. But, discrete design freedoms are more tricky to optimize.    
 
-Certain discrete design freedoms, say the phase shift pair (i, j) in a DFT filterbank, have closed-form solutions. Other discrete design freedoms have clear boundaries, say latency + 1 cannot be smaller than block size in any causal designs, latency + 1 must equal filter length when MIRROR symmetry is enforced, B cannot be smaller than T. The problem is how to find the optimal designs subject to certain constraints, say a maximum allowable latency. [This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/optimization_of_discrete_design_freedoms.m) studies DFT filterbank designs with a fixed T and filter length, and various B and latency, to generate the following results. Nearly perfect reconstruction (NPR) always is feasible for each design point, but the quality of designs could jitter a lot with respect to latency. For the most common case of T=2B, local minima for latency are at points with mod(latency+1, T)=0. Generally, there are no simple recipes for the optimization of these discrete design freedoms. A good practice is to sweep these discrete design freedoms on a scaled down design problem to find out the best recipe, and then apply the same optimal recipe on the target design. 
+Certain discrete design freedoms, say the phase shift pair (i, j) in a DFT filterbank, have closed-form solutions. Other discrete design freedoms have clear boundaries, say latency + 1 cannot be smaller than block size in any causal designs, latency+1 must equal filter length when MIRROR symmetry is enforced, B cannot be smaller than T. The problem is how to find the optimal designs subject to certain constraints, say a maximum allowable latency. [This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/optimization_of_discrete_design_freedoms.m) studies DFT filterbank designs with a fixed T and filter length, and various B and latency, to generate the following results. Nearly perfect reconstruction (NPR) always is feasible for each design point, but the quality of designs could jitter a lot with respect to latency. For the most common case of T=2B, local minima for latency are at points with mod(latency+1, T)=0. Generally, there are no simple recipes for the optimization of these discrete design freedoms. A good practice is to sweep these discrete design freedoms on a scaled down design problem to find out the best recipe, and then apply the same optimal recipe on the target design. 
 
 <img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/optimization_of_discrete_design_freedoms.svg" width="400" />
 
 Let's consider a practical design example where the block size is B=10 ms so that our processing can connect with most audio codecs without an extra ping pong buffer. The FFT size is T=16 ms, resulting in an oversample ratio of 8/5. With SAME symmetry and filter length L=4T, there are three optimal latencies: 16 ms, 40 ms, and 54 ms. Optimal latency 40 ms gives a good balance between performance and delay. [This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_design_with_optimized_latency.m) generates the following comparison results. Design with the SAME symmetry clearly outperforms that with MIRROR symmetry when subjecting to the same latency.    
 
 <img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_design_with_optimized_latency.svg" width="400" />
+
+### Exact phase linearity, a luxury or a must-have?
+
+To be clear, a linear phase filterbank suggests that all the modulated analysis and synthesis filters have linear phases. Hence, a linear phase prototype filter does not always imply a linear phase filterbank. For example, the [MDCT](https://en.wikipedia.org/wiki/Modified_discrete_cosine_transform), with either rectangular or sine window, are not linear phase DCT filterbank, although the prototype filter, i.e.,  the rectangular or sine window, are symmetric. Nevertheless, a DFT filterbank with a linear phase prototype filter is always a linear phase filterbank. 
+
+For audio processing, our human ears are deaf to absolute phases. Thus, phase linearity might not be a must-have. For image processing, phase distortion is not acceptable. But, image processing is essentially acausal as all the neighbors of a pixel can be used for its processing. Thus, filters with large latency but linear phase are affordable and good to have there.  
+
+[This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/low_latency_design_for_aec.m) generates the following comparison results to show how bad to impose linear phase and low latency constraints at the same time. Following a common but not necessarily good practice, I set symmetry=[0;1;1] to force both the analysis and synthesis filters to have linear phases, and different filter lengths and weights to get high resolution analysis filters and low resolution synthesis filters. The performance gap between linear phase and SAME symmetry designs are big. The reason is that the SAME symmetry only forces the phase linearity in the pass band, while symmetry=[0;1;1] forces the phase to be linear even in the stop band, thus wasteful.       
+
+<img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/linear_phase_can_be_a_luxury.svg" width="400" />
+
+Exact phase linearity, i.e., phase linearity in both pass and stop bands, is such a strong constraint and sometimes cannot coexist with the perfect reconstruction (PR) condition. For example, by revisiting the PR condition, we see that a QMF filter with odd filter lengths cannot has linear phase. A linear phase DCT-IV filterbank with filter length T always have zero DC gain, and thus also cannot meet the PR condition.
 
 ### Refs
 
