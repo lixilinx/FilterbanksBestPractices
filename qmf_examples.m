@@ -1,14 +1,15 @@
 clear all; close all; clc
 
-%% We design a low-latency wavelet or QMF; it's a critically decimated DFT filterbank with modulation seqs [1;1] and [1;-1]
+%% QMF: critically decimated DFT filterbank with modulation seqs [1;1] and [1;-1]
 fb = FilterBankStruct( );
 fb.T = 2;
 fb.B = 2;
-Lh = 24;
-Lg = 24;
-fb.tau0 = 16; % We will have two QMF flavors: fb.i=1 for odd latency; fb.i=0 for even latency
+Lh = 32;
+Lg = Lh;
+fb.symmetry = [1;0;0];
+fb.tau0 = Lg-1; % We will have two QMF flavors: fb.i=1 for odd latency; fb.i=0 for even latency
 eta = 1e4;
-fb.w_cut = 0.6*pi;
+fb.w_cut = 0.5*pi;
 lambda = 0;
 
 best_cost = inf;
@@ -39,11 +40,11 @@ fb_qmf = fb;
 fb = FilterBankStruct( );
 fb.T = 2;
 fb.B = 1; % no decimation
-Lh = 24;
-Lg = 24;
-fb.tau0 = 16; % Also two flavors: fb.i=1 for odd latency; fb.i=0 for even latency
+Lh = 32;
+Lg = Lh;
+fb.tau0 = Lh - 1; % Also two flavors: fb.i=1 for odd latency; fb.i=0 for even latency
 eta = 1e4;
-fb.w_cut = 0.6*pi;
+fb.w_cut = 0.5*pi;
 lambda = 0;
 
 best_cost = inf;
@@ -75,7 +76,7 @@ H = 20*log10(abs(fft(conv(fb.h, fb.g), fft_size)));
 hold on; plot(pi*(0:fft_size/2-1)/(fft_size/2), H(1:end/2))
 xlabel('\omega')
 xlim('tight')
-ylim('tight')
+ylim([-60, 20])
 ylabel('Magnitude in dB')
 legend('Wavelet/QMF', 'Nonsubsampled version')
 title('(b) Frequency domain LP filter')
