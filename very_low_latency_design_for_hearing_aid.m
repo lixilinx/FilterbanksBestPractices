@@ -1,22 +1,22 @@
 clear all; close all; clc
 % oversampled DFT filter bank
 
+% first scale down the design by 16 times to find the best initial guess
 fb = FilterBankStruct( );
-fb.T = 256; 
-fb.B = 48;  % 1 ms hop size  
-Lh = 482; % I increase filter length until over shooting arises 
-Lg = 482;
-fb.tau0 = 3*48 - 1; % 3 ms latency  
+fb.T = 256/16;
+fb.B = 48/16;  % 1 ms hop size
+Lh = 480/16; % I increase filter length until over shooting arises; another way to suppress over shooting is to set lambda > 0
+Lg = 480/16;
+fb.tau0 = 3*48/16 - 1; % 3 ms latency
 fb.symmetry = [-1;0;0];
-fb.w_cut = pi/fb.B/2; % narrower mainlobe than default designs as the over sampling ratio is too high  
+fb.w_cut = pi/fb.B/2; % narrower mainlobe than default designs as the over sampling ratio is too high
 eta = 1e4;
 lambda = 0.0;
 
 best_cost = inf;
 best_fb = fb;
-for num_trial = 1 : 10
-    [h, g] = fbd_random_initial_guess(Lh, Lg, fb.B, fb.tau0);
-    fb.h = h;   fb.g = g;
+for num_trial = 1 : 100
+    fb.h = rand(Lh,1); fb.g = rand(Lg,1);
     [fb, cost, recon_err, iter] = FilterBankDesign(fb, eta, lambda, 100);
     fprintf('Trial: %g; cost: %g; reconstruction error: %g; iterations %g\n', num_trial, cost, recon_err, iter)
     if cost < best_cost
@@ -24,7 +24,22 @@ for num_trial = 1 : 10
         best_fb = fb;
     end
 end
-[fb, cost, recon_err, iter] = FilterBankDesign(best_fb, eta, lambda, 1000);
+
+% then back to the original design
+fb = FilterBankStruct( );
+fb.T = 256;
+fb.B = 48;  % 1 ms hop size
+Lh = 480; % I increase filter length until over shooting arises; another way to suppress over shooting is to set lambda > 0
+Lg = 480;
+fb.tau0 = 3*48 - 1; % 3 ms latency
+fb.symmetry = [-1;0;0];
+fb.w_cut = pi/fb.B/2; % narrower mainlobe than default designs as the over sampling ratio is too high
+fb.h = kron(best_fb.h, ones(16, 1));
+fb.g = kron(best_fb.g, ones(16, 1));
+eta = 1e4;
+lambda = 0.0;
+
+[fb, cost, recon_err, iter] = FilterBankDesign(fb, eta, lambda, 1000);
 fprintf('Refinement. Cost: %g; reconstruction error: %g; iterations %g\n', cost, recon_err, iter)
 
 figure;

@@ -18,6 +18,7 @@ function fb = FilterBankStruct( )
 %           symmetry(2)=1 means h(t)=h(length(h)+1-t)
 %           symmetry(3)=1 means g(t)=g(length(g)+1-t)
 %           set it to 0 if no symmetry constraint is required
+% momentum: momentum to be minimized, can be 0 (default), 1, or 2
 %
 fb.Gamma=[]; 
 fb.T=[]; 
@@ -30,3 +31,4 @@ fb.g=[];
 fb.w_cut=[]; 
 fb.zeta=[]; 
 fb.symmetry=[]; 
+fb.momentum=[];

@@ -35,8 +35,11 @@ end
 if isempty(fb.symmetry)
     fb.symmetry = [0;0;0];
 end
+if isempty(fb.momentum)
+    fb.momentum = 0;
+end
    
-Gamma=fb.Gamma; T=fb.T; B=fb.B; tau0=fb.tau0; shift_i=fb.i; shift_j=fb.j; h=fb.h(:); g=fb.g(:); w_cut=fb.w_cut; zeta=fb.zeta; symmetry=fb.symmetry(:);
+Gamma=fb.Gamma; T=fb.T; B=fb.B; tau0=fb.tau0; shift_i=fb.i; shift_j=fb.j; h=fb.h(:); g=fb.g(:); w_cut=fb.w_cut; zeta=fb.zeta; symmetry=fb.symmetry(:); momentum=fb.momentum;
 Lh = length(h); Lg = length(g);
 
 if T<0 || B<0 || w_cut<0 || w_cut>=pi || zeta<0 || eta<=0 || lambda<0 || length(symmetry)~=3 || B>T || tau0<0 || tau0>Lh+Lg-2 || (symmetry(1)~=0 && Lh~=Lg) || Lh<B || Lg<B
@@ -54,14 +57,14 @@ end
 
 Tol = 1e-5; % tolerance condition for convergence
 for iter = 1 : max_iter
-    [cost, grad_h, grad_g, recon_err] = fbd_cost_grad(Gamma, shift_i, shift_j, valid_t_tau, T, B, tau0, h, g, w_cut, zeta, eta, lambda, symmetry, 1, (iter==1));
+    [cost, grad_h, grad_g, recon_err] = fbd_cost_grad(Gamma, shift_i, shift_j, valid_t_tau, T, B, tau0, h, g, w_cut, zeta, symmetry, momentum, eta, lambda, 1, (iter==1));
     
     new_cost = inf;
     step = 1/2;
     while new_cost >= cost && step >= 1/2^16 % if steps 1/2^2, 1/2^4, 1/2^8 all fails, we accept 1/2^16 anyway
         new_h = h - step*grad_h;
         new_g = g - step*grad_g;
-        [new_cost, ~, ~, ~] = fbd_cost_grad(Gamma, shift_i, shift_j, valid_t_tau, T, B, tau0, new_h, new_g, w_cut, zeta, eta, lambda, symmetry, 0, 0);
+        [new_cost, ~, ~, ~] = fbd_cost_grad(Gamma, shift_i, shift_j, valid_t_tau, T, B, tau0, new_h, new_g, w_cut, zeta, symmetry, momentum, eta, lambda, 0, 0);
         step = step*step;
     end
     h = new_h;
@@ -73,11 +76,11 @@ end
 fb.Gamma=Gamma; fb.T=T; fb.B=B; fb.tau0=tau0; fb.i=shift_i; fb.j=shift_j; fb.h=h; fb.g=g; fb.w_cut=w_cut; fb.zeta=zeta; fb.symmetry=symmetry;
 
 
-function [cost, grad_h, grad_g, recon_err] = fbd_cost_grad(Gamma, shift_i, shift_j, valid_t_tau, T, B, tau0, h, g, w_cut, zeta, eta, lambda, symmetry, need_grad, init)
+function [cost, grad_h, grad_g, recon_err] = fbd_cost_grad(Gamma, shift_i, shift_j, valid_t_tau, T, B, tau0, h, g, w_cut, zeta, symmetry, momentum, eta, lambda, need_grad, init)
 % cost and gradients evaluation for filter bank design
 %
 % INPUTS:
-%  	filter bank structure fields, eta, lambda
+%  	filter bank structure fields, and penalty factors eta and lambda
 %  	need_grad: 0 if no need to evaluate gradients; 1 if need gradients
 %   init:   1 for initialization; 0 for no initialization
 %
@@ -96,7 +99,7 @@ Lh = length(h);
 Lg = length(g);
 
 if init || isempty(hess_fixed_part) || isempty(all_Mask) || isempty(all_delta_tau_tau0)
-    hess_fixed_part = blkdiag(matrix_stopband_energy(Lh, w_cut), zeta*matrix_stopband_energy(Lg, w_cut));
+    hess_fixed_part = blkdiag(matrix_stopband_energy(Lh, w_cut, momentum), zeta*matrix_stopband_energy(Lg, w_cut, momentum));
     hess_fixed_part = hess_fixed_part + lambda*eye(Lh + Lg);
     if symmetry(1)>0
         hess_fixed_part = hess_fixed_part + eta*[eye(Lh), -fliplr(eye(Lh)); -fliplr(eye(Lh)), eye(Lh)];
@@ -163,14 +166,29 @@ grad_h = grad(1:Lh);
 grad_g = grad(Lh+1:end);
 
 
-function P = matrix_stopband_energy(L, w_cut)
+function P = matrix_stopband_energy(L, w_cut, momentum)
 % the Toeplitz matrix \Pi in the report
 %   L: size of P
 %   w_cut: cutoff angular frequency
+%   momentum: 0, 1, or 2
 %
 h = zeros(1, L);
-h(1) = pi - w_cut;
-h(2:end) = -sin( (1-(2:L))*w_cut )./( 1 - (2:L) );
+pmq = 1 - (2:L); % p - q
+
+switch momentum
+    case 0
+        h(1) = pi - w_cut;
+        h(2:end) = -sin( pmq*w_cut )./pmq;
+    case 1
+        h(1) = (pi^2 - w_cut^2)/2;
+        h(2:end) = -( cos(pmq*w_cut) + w_cut*pmq.*sin(pmq*w_cut) - (-1).^pmq )./pmq.^2;
+    case 2
+        h(1) = (pi^3 - w_cut^3)/3;
+        h(2:end) = -( (w_cut^2*pmq.^2 - 2).*sin(pmq*w_cut) + 2*w_cut*pmq.*cos(pmq*w_cut) - 2*pi*pmq.*(-1).^pmq )./pmq.^3;
+    otherwise
+        error('Design momentum undefined. You may specify your own design here.');
+end
+
 P = toeplitz( h );
 
 
