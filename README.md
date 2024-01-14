@@ -1,6 +1,6 @@
 # Best practices with filterbanks
 
-Filterbank is versatile but also tricky. Here, I’d like to share what I have learned from my many years of practice (mainly for audio processing). The math and design methods are from [my paper](https://ieeexplore.ieee.org/document/8304771). It is a straightforward time domain design framework that can cover most cases (DFT and DCT filterbanks, DWT and complex DWT, constraints like latency, symmetry and phase linearity). 
+Filterbank is versatile but also tricky. Here, I’d like to share what I have learned from my many years of practice (mainly for audio processing). The math and design methods are from [my paper](https://ieeexplore.ieee.org/document/8304771). It is a straightforward time domain design framework that can cover most cases (DFT and DCT filterbanks, DWT and complex DWT, constraints like latency, symmetry and phase linearity, control on sidelobe tails, ...). 
 
 Topics:
 
@@ -29,6 +29,8 @@ Topics:
 [Optimization of discrete design freedoms](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#optimization-of-discrete-design-freedoms)
 
 [Exact phase linearity, a luxury or a must-have?](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#exact-phase-linearity-a-luxury-or-a-must-have)
+
+[Fine balance between resolution and leakage](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#fine-balance-between-resolution-and-leakage)
 
 ### What is a filterbank
 
@@ -159,8 +161,18 @@ For audio processing, our human ears are deaf to absolute phases. Thus, phase li
 
 Exact phase linearity is such a strong constraint and sometimes cannot coexist with the perfect reconstruction (PR) condition. For example, by revisiting the frequency domain PR condition, we see that a critically decimated QMF filter with odd filter lengths cannot have linear phase. A linear phase DCT-IV filterbank with filter length T must have zero DC gain as all the modulation sequences are anti-symmetric, and thus cannot meet the PR condition as well. Nevertheless, it could be sufficient to have approximately linear phase in the pass band in most cases.  
 
+### Fine balance between resolution and leakage
+
+In the same way for considering window design, say Hann vs Hamming, we also have choices for balancing the spectral resolution and leakage for filterbank design. The following pic summarizes the common stopband losses for filterbank design. One also can come up with his own customized design.      
+
+<img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/smallest_momentum_designs.svg" width="400" />
+
+[This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/different_min_momentum_designs.m) generates the following comparison results showing the tradeoff between resolution and leakage. The default setting, i.e., minimizing the 0th momentum, has the narrowest mainlobe, but largest sidelobe tails. The design minimizing the 2nd momentum, i.e., the momentum of inertia, has the widest mainlobe, but significantly lower sidelobe tails.     
+
+<img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/different_min_momentum_designs.svg" width="500" />
+
 ### Resources 
 
-1, [Periodic sequences modulated filter banks](https://ieeexplore.ieee.org/document/8304771), IEEE SPL, 2018. (notation and math are from this paper)
+1, [Periodic sequences modulated filter banks](https://ieeexplore.ieee.org/document/8304771), IEEE SPL, 2018. (Notation and math are from this paper. A typo in Table I: J in the Gamma matrix for GDFT should be I.)
 
-2, The matlab filterbank design code is the same as [here](https://sites.google.com/site/lixilinx/home/psmfb). I also have [Tensorflow and Pytorch implementations](https://github.com/lixilinx/Filterbank) of the DFT modulated filterbank, not polished but works, useful for end2end differentiable DSP designs.
+2, The matlab filterbank design code is slightly adapted from [the original version here](https://sites.google.com/site/lixilinx/home/psmfb). I also have [Tensorflow and Pytorch implementations](https://github.com/lixilinx/Filterbank) of the DFT modulated filterbank, not polished but works, useful for end2end differentiable DSP designs.
