@@ -10,6 +10,8 @@ Topics:
 
 [SAME symmetry if low latency is crucial](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#same-symmetry-if-low-latency-is-crucial)
 
+[Symmetries and least squares reconstruction](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#symmetries-and-least-squares-reconstruction)
+
 [Designs with lower aliasing do not necessarily performs better for tasks like AEC](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#designs-with-lower-aliasing-do-not-necessarily-performs-better-for-tasks-like-aec)
 
 [Squeezing synthesis filter does not help low latency filterbank design](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#squeezing-synthesis-filter-does-not-help-low-latency-filterbank-design)
@@ -48,9 +50,9 @@ Here, I mainly focus on the DFT modulated filterbanks. Still, all these modulate
 
 ### MIRROR symmetry if latency is unconcerned
 
-[This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/mirror_design_for_latency_insensitive_applications.m) generates the following design for applications insensitive to latency. With latency+1=filter length and symmetry setting either [1;0;0] or [0;0;0], the code finds this optimal design where analysis and synthesis filters mirror each other. Forcing symmetry=[-1;0;0] (analysis filter equals synthesis filter) leads to noticeable less sidelobe suppression as the resultant filter is symmetric, thus halves the continuous design freedoms.
+MIRROR symmetry imposes constraint $\pmb h = {\rm flip}(\pmb g)$, where $\pmb h$ and $\pmb g$ are the prototype analysis and synthesis filters, respectively. [This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/mirror_design_for_latency_insensitive_applications.m) generates the following design for applications insensitive to latency. With latency+1=filter length and symmetry setting either [1;0;0] or [0;0;0], the code finds this optimal design where analysis and synthesis filters mirror each other. Forcing symmetry=[-1;0;0] (analysis filter equals synthesis filter) leads to noticeable less sidelobe suppression as the resultant filter itself is symmetric, thus halves the continuous design freedoms.
 
-MIRROR symmetry leads to the least aliasing, but brings two possible drawbacks: 
+MIRROR symmetry leads to the least aliasing and also the [least squares solution for signal reconstruction](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#symmetries-and-least-squares-reconstruction), but brings two possible drawbacks: 
 * Generally it is not good for low latency design as here, latency+1 must equal filter length.
 * Typically neither the analysis nor the synthesis filter has good linear phase property (surely, their combined phase is linear as the analysis-synthesis filter is symmetric). 
 
@@ -59,13 +61,53 @@ MIRROR symmetry leads to the least aliasing, but brings two possible drawbacks:
 
 ### SAME symmetry if low latency is crucial
 
-[This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/low_latency_design_for_aec.m) generates the following low latency (latency+1 < filter length) design with symmetry=[-1;0;0], which suits realtime processings like acoustic echo cancellation (AEC), beamforming (BF), noise suppression (NS), etc. Clearly, MIRROR symmetry is incompatible with the low latency requirement. 
+SAME symmetry imposes constraint $\pmb h=\pmb g$. [This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/low_latency_design_for_aec.m) generates the following low latency (latency+1 < filter length) design with symmetry=[-1;0;0], which suits realtime processings like acoustic echo cancellation (AEC), beamforming (BF), noise suppression (NS), etc. Clearly, MIRROR symmetry is incompatible with the low latency requirement. 
 
 I gradually increase filter length until overshoot, i.e., bumpy mainlobe, arises. Another strategy is to start from a large filter length, and then gradually increase $\lambda$ to damp the overshoot if there is.
 
 Setting symmetry=[0;0;0] releases all the design freedoms, and typically finds solutions with much lower aliasing. Lowering aliasing benefits certain applications like low, high or band pass filtering (LPF/HPF/BPF), sample-rate conversion (SRC), etc. However, symmetric design has nicer numerical properties and better fits other tasks like AEC. Another merit of the SAME symmetry is that both the analysis and synthesis filters must have approximately linear phase in the pass band as otherwise, nearly perfect reconstruction (NPR) is not possible. In the extreme case of latency+1 = filter length, the SAME symmetry leads to exactly linear phase prototype filters.  
 
 <img src="https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/low_latency_design_for_aec.svg" width="400" /> 
+
+### Symmetries and least squares reconstruction 
+Symmetry is important due to the following numerical property:
+* With the MIRROR symmetry, filterbank synthesis gives the least squares solution for fitting a given set of analysis results, whether consistent or not. 
+
+Synthesis with the SAME symmetry generally only approximates the least squares solution for fitting a given set of analysis results due to the phase linearity in the pass band, not necessarily the stop band. If the phase also is linear in the stop band, then the DFT filterbank has both the MIRROR and SAME symmetries.
+  
+To show this property, let's consider a STFT with analysis and synthesis prototype filters $\pmb h=[h(0), h(1), \ldots]^T$ and $\pmb g=[g(0), g(1), \ldots]^T$, respectively. With $\pmb F$ being the normalized DFT matrix ($\pmb F^{H}\pmb F=\pmb I$), the STFT of a time signal $\pmb x=[x(0), x(1), \ldots]^T$ is given by 
+
+$$
+ \pmb X = \begin{bmatrix}
+ \pmb F {\rm diag}({\rm flip}(\pmb h)) &  & \\
+ & \pmb F {\rm diag}({\rm flip}(\pmb h)) & \\
+ & & \ddots \\
+\end{bmatrix} \pmb x  = \pmb H \pmb x, \qquad   ( {\rm what \\, shown \\, is \\, not\\, a \\, block \\,matrix, \\, just \\, the \\, layout \\, of \\, rows })
+$$
+
+The inverse STFT (ISTFT) on STFT results $\pmb Y$ is
+
+$$
+ \pmb y = \begin{bmatrix}
+  {\rm diag}(\pmb g) \pmb F^{-1} &  & \\
+ & {\rm diag}(\pmb g) \pmb F^{-1} & \\
+ & & \ddots \\
+\end{bmatrix} \pmb Y  = \pmb G \pmb Y, \qquad   ( {\rm what \\, shown \\, is \\, not\\, a \\, block \\,matrix, \\, just \\, the \\, layout \\, of \\, columns })
+$$
+
+By design, $\pmb G\pmb H = \pmb I$ (ignoring the delay and reconstruction errors). Now, let's consider the linear system  $\pmb H x = \pmb X$ with $\pmb x$ unknown. It is over-determined when $B < T $, and the least squares solution is given by $\hat{x}=(\pmb H^H \pmb H)^{-1} \pmb H^H \pmb X$. Is this $\hat{x}$ the same as $\pmb G \pmb X$? Not always. But, when $\pmb g = {\rm flip}(\pmb h)$, then indeed synthesis gives the least squares solution as shown by
+
+$$ (\pmb H^H \pmb H)^{-1} H^H = (\pmb G\pmb H  )^{-1} \pmb G = \pmb G $$
+
+In general, we can show that with the MIRROR symmetry, $\pmb G$ is the Moore–Penrose inverse of $\pmb H$, and synthesis $\hat{x} = \pmb G \pmb X$ gives the least squares solution for $\pmb x$ fitting equations $\pmb H \pmb x = \pmb X$. 
+
+One application of this property is signal reconstruction from magnitude spectra $\pmb A \ge 0$. We are to solve the following optimization problem 
+
+$$
+\min_{\pmb s, \\, \pmb \phi} || \pmb H \pmb s - e^{\sqrt{-1} \pmb \phi} \pmb A ||^2
+$$
+
+with the Griffin-Lim algorithm, i.e., alternatively optimizing $\pmb s$ given $e^{\sqrt{-1} \pmb \phi} \pmb A$ (filterbank synthesis) and phase $\pmb \phi$ given $\pmb s$ (simply taking the phase of $\pmb H\pmb s$). Clearly, the Griffin-Lim algorithm requires MIRROR symmetry filterbanks to ensure its convergence. See this [audio stretching demo](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/mag2sig.m) for illustration.     
 
 ### Designs with lower aliasing do not necessarily performs better for tasks like AEC
 
@@ -76,6 +118,8 @@ Lower aliasing is a necessary, but not sufficient, condition for better AEC perf
 ### Squeezing synthesis filter does not help low latency filterbank design
 
 Some manually designed low latency filterbanks have long and refined filters for analysis, and short and coarse filters for synthesis. Such a practice may not yield balanced and efficient designs as the analysis filters mainly focus on old samples, not the recent samples that are to be decomposed and re-synthesized. Aliasing caused by poor synthesis filters is another concern. Anyway, our time-frequency analysis cannot break the [uncertainty principle](https://en.wikipedia.org/wiki/Uncertainty_principle) The math is still the same. [This script](https://github.com/lixilinx/PracticalFilterbanks/blob/main/very_low_latency_design_for_hearing_aid.m) generates the following extremely low latency design suitable for applications like hearing aid. Note that since the oversampling ratio is high, I have halved the default mainlobe width by setting the cutoff frequency to $\omega_c = \pi/B/2$ to sharpen the frequency resolution.
+
+Also see the [phase linearity discussions](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#exact-phase-linearity-a-luxury-or-a-must-have) for more examples. 
 
 <img src="https://github.com/lixilinx/Best-practices-for-filterbanks/blob/main/very_low_latency_design_for_hearing_aid.svg" width="400" />
 
@@ -91,7 +135,7 @@ The same argument holds for the [modified DCT (MDCT)](https://en.wikipedia.org/w
 
 SRC can be expensive and invokes extra latency. But, a time domain SRC may be unnecessary in many cases. [This example](https://github.com/lixilinx/PracticalFilterbanks/blob/main/spare_that_SRC.m) shows how we can save a 16KHz $\rightarrow$ 48KHz SRC by analyzing with filter for 16 KHz design and synthesizing with the one for 48 KHz design. The trick is that [this code](https://github.com/lixilinx/PracticalFilterbanks/blob/main/low_latency_design_for_aec.m) designs the two filters from initial guess of the same shape, and thus they are compatible.
 
-Actually, resampling in the frequency domain could be easier (with the help of a good FFT lib) than in the time domain when the conversion ratio is complicated, e.g., 44.1KHz $\leftrightarrow$ 16KHz. We just need to switch to the matched synthesis filters that are prepared in advance. The same argument applies to the analysis side. Most likely the SRC before filterbank analysis can be saved as well, just by switching to the analysis filters matching the original sample rate.
+Actually, resampling in the frequency domain could be easier (with the help of a good FFT lib) than in the time domain when the conversion ratio is complicated, e.g., 44.1KHz $\leftrightarrow$ 16KHz. We just need to switch to the matched synthesis filters that are prepared in advance. The same argument holds for the analysis side too. Most likely the SRC before filterbank analysis can be saved as well, just by switching to the analysis filters matching the original sample rate.
 
 ### Frequency shift on analytic signal only
 
@@ -119,9 +163,9 @@ DCT filterbanks like [the MDCT](https://en.wikipedia.org/wiki/Modified_discrete_
 
 ### Special designs: wavelet, complex wavelet, quadrature mirror filter (QMF), customized, nonsubsampled and nonuniform filterbanks
 
-Discrete wavelet (DWT) and QMF are DFT filterbanks with $T=2$, thus having the two modulation sequences: $[1, 1]$ for low pass (LP) filters and $[1, -1]$ for high pass (HF) filters. This observation lets us design all the possible flavors of QMFs: critically decimated ($B=2$) or oversampled ($B=1$), different symmetries, low latency and phase linearity. See the [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) for details.   
+Discrete wavelet (DWT) and QMF are DFT filterbanks with $T=2$, thus having the two periodic modulation sequences: $[1,\\,1]$ for low pass (LP) filters and $[1, \\,-1]$ for high pass (HF) filters. This observation lets us design all the possible flavors of QMFs: critically decimated ($B=2$) or oversampled ($B=1$), different symmetries, low latency and phase linearity. See the [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) for details.   
 
-DWT is sensitive to signal shift. By replacing the two modulation sequences in DWT with $[1,\sqrt{-1},-1,-\sqrt{-1}]$ and $[1,-\sqrt{-1},-1,\sqrt{-1}]$, we obtain the complex wavelet which decomposes the signal into positive and negative frequency parts, where $\sqrt{-1}$ is the imaginary unit. The envelope of complex wavelet coefficients are less sensitive to signal shift as the phase compensates for it. Unlike the dual-tree complex DWT that can only be redundant, we can generate critically sample design, see the [complex wavelet](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/critically_sampled_complex_wavelet.m) example.  
+DWT is sensitive to signal shift. By replacing the two modulation sequences in DWT with $[1,\\,\sqrt{-1},\\,-1,\\,-\sqrt{-1}]$ and $[1,\\,-\sqrt{-1},\\,-1,\\,\sqrt{-1}]$, we obtain the complex wavelet which decomposes the signal into positive and negative frequency parts, where $\sqrt{-1}$ is the imaginary unit. The envelope of complex wavelet coefficients are less sensitive to signal shift as the phase compensates for it. Unlike the dual-tree complex DWT that can only be redundant, our complex DWT designs support critical sampling, see the [complex wavelet](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/critically_sampled_complex_wavelet.m) example.  
 
 Nonsubsampled filterbanks are the ones with $B=1$, i.e., no downsampling after analysis. See the [QMF examples](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/qmf_examples.m) and the [nonuniform design example](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/a_nonuniform_design.m).
 
