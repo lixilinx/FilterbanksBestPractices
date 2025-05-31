@@ -20,7 +20,7 @@ Topics:
 
 [Spare that SRC](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#spare-that-src)
 
-[Frequency shift on analytic signal only](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#frequency-shift-on-analytic-signal-only)
+[Frequency shift with analytic signal](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#frequency-shift-on-analytic-signal-only)
 
 [Remove the systemic phase biases](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#remove-the-systemic-phase-biases)
 
@@ -33,6 +33,8 @@ Topics:
 [Exact phase linearity, a luxury or a must-have?](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#exact-phase-linearity-a-luxury-or-a-must-have)
 
 [Fine balance between resolution and leakage](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#fine-balance-between-resolution-and-leakage)
+
+Note: there are some issues rendering bold math symbols, say a bold 𝐚 maybe rendered as a or aa in the equation.   
 
 ### What is a filterbank
 
@@ -137,9 +139,9 @@ SRC can be expensive and invokes extra latency. But, a time domain SRC may be un
 
 Actually, resampling in the frequency domain could be easier (with the help of a good FFT lib) than in the time domain when the conversion ratio is complicated, e.g., 44.1KHz $\leftrightarrow$ 16KHz. We just need to switch to the matched synthesis filters that are prepared in advance. The same argument holds for the analysis side too. Most likely the SRC before filterbank analysis can be saved as well, just by switching to the analysis filters matching the original sample rate.
 
-### Frequency shift on analytic signal only
+### Frequency shift with analytic signal
 
-Frequency shift is a common operation to cut off the acoustic feedback in systems like hearing aid and public address (PA) systems. One possible choice is to shift the signals in the frequency domain. This practice may be improper as the synthesis filters are not shifted accordingly, and this misalignment may cause artifacts like beats even with shift of a few Hz. [This code](https://github.com/lixilinx/PracticalFilterbanks/blob/main/frequency_shift_with_analytic_signal.m) shows an alternative practice: first split the signal into two analytic parts; then shift the low frequency part less, and high frequency part more. For this example, we see that the absolute normalized cross correlation between input and output reduces to about zero by tens Hz of shifting while without any audible artifacts.
+Frequency shift is a common operation to cut off the acoustic feedback in systems like hearing aid and public address (PA) systems. One possible choice is to shift the signals in the frequency domain directly. This approximate way may introduce noticeable harmonic distortions when either the amount of shift or the hop size is large. [This code](https://github.com/lixilinx/PracticalFilterbanks/blob/main/frequency_shift_with_analytic_signal.m) shows an alternative practice: first split the signal into two analytic parts; then shift the low frequency part less, and high frequency part more. For this example, we see that the absolute normalized cross correlation between input and output reduces to about zero by tens Hz of shifting while without any audible artifacts.
 
 ### Remove the systemic phase biases
 
@@ -189,7 +191,7 @@ The [nonuniform example](https://github.com/lixilinx/FilterbanksBestPractices/bl
 
 Filterbank design is an optimization problem loaded with local minima. We are almost sure to find the global minima for the continuous design freedoms by starting the filter coefficients from diverse random initial guesses. But, those discrete design freedoms are more tricky to optimize.    
 
-Certain discrete design freedoms, say the phase shift pair $(i, j)$ in a DFT filterbank, have closed-form solutions. Other discrete design freedoms have clear boundaries, say latency+1 cannot be smaller than block size in any causal designs, latency+1 must equal filter length when MIRROR symmetry is enforced, $B$ cannot be smaller than $T$, ... The problem is how to find the optimal designs subject to certain constraints, say a maximum allowable latency. [This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/optimization_of_discrete_design_freedoms.m) studies DFT filterbank designs with a fixed $T$ and filter length, and various $B$ and latency, to generate the following results. Nearly perfect reconstruction (NPR) always is feasible for each design point, but the quality of designs could jitter a lot with respect to latency. For the most common case of $T=2B$, local minima for latency are at points with mod(latency+1, $T$)=0. Generally, there are no simple recipes for the optimization of these discrete design freedoms. A good strategy is to sweep these discrete design freedoms on a scaled down design problem to find out the best recipe, and then apply the found optimal recipe on the full scale target design. 
+Certain discrete design freedoms, say the phase shift pair $(i, j)$ in a DFT filterbank, have closed-form solutions. Other discrete design freedoms have clear boundaries, say latency+1 cannot be smaller than block size in any causal designs, latency+1 must equal filter length when MIRROR symmetry is enforced, $B$ cannot be smaller than $T$, ... The problem is how to find the optimal designs subject to certain constraints, say a maximum allowable latency. [This script](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/optimization_of_discrete_design_freedoms.m) studies DFT filterbank designs with a fixed $T$ and filter length, and various $B$ and latency, to generate the following results. Nearly perfect reconstruction (NPR) always is feasible for each design point, but the quality of designs could jitter a lot with respect to latency. For the most common case of $T=2B$, local minima for latency are at points with mod(latency+1, $T$)=0. Generally, there are no simple recipes for the optimization of these discrete design freedoms. A good strategy is to sweep these discrete design freedoms on a scaled down design problem to find out the best recipe, and then apply the found optimal recipe to the full scale target design. 
 
 <img src="https://github.com/lixilinx/FilterbanksBestPractices/blob/main/optimization_of_discrete_design_freedoms.svg" width="400" />
 
