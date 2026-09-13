@@ -2,6 +2,8 @@
 
 Filterbank is versatile but also tricky. Here, I’d like to share what I have learned from my many years of practice (mainly for audio processing). The math and design methods are from [my paper](https://ieeexplore.ieee.org/document/8304771). It is a straightforward time domain design framework that can cover most cases (DFT and DCT filterbanks, DWT and complex DWT, constraints like latency, symmetry and phase linearity, control on sidelobe tails, ...). 
 
+Update: I have added the [Python filterbank design code](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/filterbank_design.py) and [DFT](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/demo_dft_filter_bank.py)/[DCT4](https://github.com/lixilinx/FilterbanksBestPractices/blob/main/demo_dct4_filter_bank.py) modulated filterbank examples.  
+
 Topics:
 
 [What is a filterbank](https://github.com/lixilinx/FilterbanksBestPractices/tree/main#what-is-a-filterbank)
